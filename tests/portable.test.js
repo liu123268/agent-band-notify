@@ -20,6 +20,15 @@ function temp(t) {
   return dir;
 }
 
+function copyTree(source, destination) {
+  if (fs.statSync(source).isDirectory()) {
+    fs.mkdirSync(destination, { recursive: true });
+    for (const name of fs.readdirSync(source)) copyTree(path.join(source, name), path.join(destination, name));
+  } else {
+    fs.copyFileSync(source, destination);
+  }
+}
+
 test('environment overrides apply without a local config file', () => {
   const result = run(['-e', 'console.log(JSON.stringify(require("./src/config").loadConfig()))'], {
     BAND_NOTIFY_TOPIC: 'new-machine-topic', BAND_NOTIFY_SERVER: 'http://127.0.0.1:9999', BAND_NOTIFY_MIN_SECONDS: '17',
@@ -76,8 +85,9 @@ test('a fresh checkout works from a directory containing spaces and Chinese', t 
   const copy = path.join(dir, '工具 folder');
   fs.mkdirSync(copy);
   for (const name of ['src', 'notify.js', 'config.example.json']) {
-    fs.cpSync(path.join(ROOT, name), path.join(copy, name), { recursive: true });
+    copyTree(path.join(ROOT, name), path.join(copy, name));
   }
+  assert.ok(fs.existsSync(path.join(copy, 'src', 'config.js')), 'Copied checkout must contain config.js before launch');
   const result = run([path.join(copy, 'notify.js'), '--dry-run', '--agent', 'Demo', '--state', 'done',
     '--conversation', '测试会话', '--preview', '任务已完成'], { BAND_NOTIFY_TOPIC: 'portable-test-topic' });
   assert.equal(result.status, 0, result.stderr);
