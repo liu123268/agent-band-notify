@@ -1,0 +1,22 @@
+{
+  "transport": "ntfy",
+  "ntfyServer": "https://ntfy.sh",
+  "topic": "REPLACE_ME",
+  "token": "",
+  "priority": 4,
+  "tags": [
+    "robot",
+    "bell"
+  ],
+  "clickUrl": "",
+  "title": "{stateEmoji} {stateLabel}",
+  "body": "【{software}】{conversation} · {summary}",
+  "previewMax": 60,
+  "conversationMax": 16,
+  "minSeconds": 3,
+  "enabled": true,
+  "logDir": "logs",
+  "logFile": "notify.log",
+  "debug": false,
+  "chain": []
+}
