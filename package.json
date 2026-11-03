@@ -1,6 +1,6 @@
 {
   "name": "agent-band-notify",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Agent task notifications from Windows to Android and a paired smart band through ntfy",
   "license": "MIT",

@@ -1,95 +1,114 @@
-# agent-band-notify
+# Agent Band Notify · 智能体手环提醒
 
-AI 任务完成、出错或需要你回答时，让手机收到通知，再由手环的配套 App 转发到手环。
+AI 任务完成、出错、需要回答或批准时，电脑自动发出通知，由 Android 手机转发到手环或手表。离开电脑后，也能知道什么时候需要回来处理。
 
-适用环境：**Windows 电脑 + Android 手机 + 支持应用通知转发的手环或手表**。桌面侧使用 Node.js，运行时不需要安装第三方 npm 依赖。
+**适用：Windows 10/11 64 位电脑（Intel / AMD）+ Android 手机 + 已配对且支持应用通知的手环或手表。** 电脑和手机都需要联网，并能访问所选的 ntfy 服务器。当前便携包不适用于 Windows ARM、macOS 或 iPhone。
+
+## 先下载这两个文件
+
+| 在哪台设备用 | 下载什么 | 下载后做什么 |
+| --- | --- | --- |
+| **电脑** | [下载 Windows 便携包：AgentBandNotify-Windows-x64.zip](https://github.com/liu123268/agent-band-notify/releases/latest/download/AgentBandNotify-Windows-x64.zip) | 全部解压，然后按下面的步骤双击 `.cmd` 文件 |
+| **Android 手机** | [下载 ntfy 安装包：ntfy-1.25.2-fdroid-release.apk](https://github.com/binwiederhier/ntfy-android/releases/download/v1.25.2/ntfy-1.25.2-fdroid-release.apk) | 在手机上打开 APK，按提示安装 ntfy |
+
+电脑便携包**已带 Node.js 运行环境**，普通使用无需安装 Node.js、Python、Git，也无需执行 `npm install`。手机上的手环配套 App 继续用原来配对手环的那个，例如“小米运动健康”。
+
+下载打不开时：[电脑发布页](https://github.com/liu123268/agent-band-notify/releases/latest) → 展开 **Assets / 资源** → 点 `AgentBandNotify-Windows-x64.zip`；[手机官方下载方式](https://docs.ntfy.sh/subscribe/phone/)提供 Google Play、F-Droid 和 GitHub 安装入口。[手机 APK 发布页](https://github.com/binwiederhier/ntfy-android/releases/latest)中选择名称含 **`fdroid-release.apk`** 的文件，`debug.apk` 和 `.aab` 是其他用途。
+
+GitHub 的绿色 **Code → Download ZIP** 和发布页自动生成的 **Source code** 是源码；第一次使用请下载上面指定的 **Windows 便携包**。
+
+## 第一次使用：按 1 → 5 做
+
+### 1. 电脑：全部解压
+
+1. 在电脑点击上面的 Windows 便携包下载链接。浏览器下载列表中应出现 `AgentBandNotify-Windows-x64.zip`。
+2. 在下载文件上点右键 → **全部解压缩 / 全部提取**。选择自己能写入的文件夹，例如 `D:\Tools`，再点“提取”。
+3. 打开解压得到的文件夹，一直进入到能看到下面五个编号文件的位置。
 
 ```text
-智能体软件的本地会话文件 / SQLite
-                 ↓
-         一个后台监听器
-      识别状态 → 去重 → 生成摘要
-                 ↓ HTTPS
-              ntfy 服务
-                 ↓
-          Android ntfy 通知
-                 ↓ 配套 App 转发
-              手环 / 手表
+AgentBandNotify-Windows-x64/
+  01-首次配置.cmd
+  02-发送测试通知.cmd
+  03-开始监听.cmd
+  04-查看状态.cmd
+  05-停止监听.cmd
+  使用说明.txt
+  README.md
+  docs/
+  app/                 ← 程序和运行环境，保留整个文件夹
 ```
 
-它不直接连接手环蓝牙，不替代手环官方 App，也不会自动替你批准智能体的操作。
+**在解压后的文件夹操作。** 直接在 ZIP 预览窗口双击，或只拖出一个 `.cmd`，会缺少程序文件。Windows 隐藏扩展名时，看到的可能是“01-首次配置”，类型为“Windows 命令脚本”，也可以双击。
 
-## 支持的软件
+### 2. 电脑：双击“01-首次配置.cmd”
 
-| 软件 | 完成 / 出错 | 等待回答 | 等待批准 | 数据来源 |
-| --- | --- | --- | --- | --- |
-| Codex | 支持 | 提问工具事件 | 审批事件 | 本地 rollout JSONL |
-| DeepSeek Harness | 支持 | 会话中的提问状态 | 计划待审状态 | 本地会话快照 |
-| WorkBuddy | 支持 | AskUserQuestion 事件 | 安全中心审计事件 | 会话 JSONL 与审计文件 |
-| ZCode | 支持 | 回复文本规则，可能误判 | SQLite 权限记录 | 会话 JSONL 与数据库 |
-| MiMo Desktop | 支持 | 问答工具 / 交互命令状态 | SQLite 权限记录 | 本地 SQLite 数据库 |
+窗口显示 **“首次配置已完成”**，同时打开记事本，里面有两项需要填到手机的信息：
 
-五个软件共用 **7 个数据源适配器和 1 个监听进程**。未安装的软件不会阻止其他适配器工作。适配器依赖软件的本地数据格式，软件升级后可能需要调整；它们不是上述软件提供的官方通知接口。
-
-## 快速开始
-
-### 1. 准备电脑
-
-安装 [Node.js](https://nodejs.org/en/download) **22.13 或更新版本**，建议使用 Node.js 24。SQLite 适配器使用 Node 内置的 `node:sqlite`。
-
-下载本仓库 ZIP 并解压，或使用 Git：
-
-```powershell
-git clone https://github.com/liu123268/agent-band-notify.git
-cd agent-band-notify
-node --version
-npm run setup
+```text
+服务器地址：https://ntfy.sh
+主题名称 / Topic：agent-后面一长串随机字母和数字
 ```
 
-`setup` 会从示例创建本地 `config.json`，生成随机频道名，并在终端显示。首次运行不发送通知，不修改智能体软件的配置；再次运行会保留原频道，并备份现有配置。
+这里的“主题”相当于电脑和手机约好的收件地址：**两边填同一个，手机才能收到电脑发来的提醒。** 每个人都会生成自己的随机名称，实际请复制记事本中的整串文字。
 
-**记下自己生成的频道名。手机和电脑要使用同一个 ntfy 服务器与频道。** 不要使用 README 里的示例文字作为真实频道。
+先保留记事本，继续设置手机。信息也保存在 `app/phone-subscription.txt`，以后可重新打开。重复双击首次配置会保留现有主题。
 
-无需执行 `npm install`。如果终端不允许运行 `npm.ps1`，可直接使用 `npm.cmd`，或执行对应的 `node tools/...` 命令。
+### 3. 手机：安装 ntfy，并订阅自己的主题
 
-### 2. 配置手机和手环
+1. 在 **Android 手机**上打开上面的 ntfy APK 下载链接。下载完成后点 APK 安装；若提示当前浏览器没有安装权限，按系统提示允许本次安装。
+2. 打开 **ntfy**，允许它发送通知。
+3. 点 **`+` / 添加订阅**。主题一栏填写电脑记事本里的 **`agent-...` 整串名称**。只填名称，不把 `https://ntfy.sh/` 拼进去。
+4. 服务器使用 **`https://ntfy.sh`**；如果已经显示这个默认服务器，保持即可。最后点 **订阅 / Subscribe**。
+5. 手机 ntfy 的列表中出现自己刚添加的主题，说明订阅已建立。按手机系统提示允许 ntfy 后台联网、自启动，解除可能阻止提醒的电池限制。
 
-1. 安装 [ntfy Android App](https://docs.ntfy.sh/subscribe/phone/)。官方提供 Google Play、F-Droid 和 GitHub APK 下载入口。
-2. 添加订阅：默认服务器是 `https://ntfy.sh`，频道填写上一步生成的随机名称。
-3. 允许 ntfy 显示通知，并按手机系统要求放开后台运行、电池限制和自启动权限。
-4. 打开手环配套 App，在“应用通知”中允许转发 ntfy。小米设备通常通过“小米运动健康”设置，具体菜单随手机和设备版本变化。
+电脑和手机上的服务器、主题必须完全一致。记事本里的示例说明文字不用填进手机。[更详细的手机设置与排错](docs/phone-setup.md)
 
-详细步骤、手机能收到但手环不振动的排查见 [手机与手环设置](docs/phone-setup.md)。
+### 4. 手机：让手环配套 App 转发 ntfy
 
-### 3. 先测试，再启动监听
+1. 打开你平时连接手环的 **配套 App**，确认设备已连接。
+2. 进入这只手环的设备设置 → **应用通知 / 消息提醒**。
+3. 在应用列表中找到 **ntfy**，打开通知转发。若有“其他应用”列表，也在里面找。
+4. 按提示给配套 App 授予 **通知读取权限 / 通知使用权**。检查手环是否开启了勿扰或睡眠模式。
 
-```powershell
-npm run doctor
-node notify.js --test --json
-npm start
-```
+这一步把“手机收到的 ntfy 通知”继续转到手环。具体菜单名称随品牌和系统版本变化；手机装好 ntfy 后，还要检查配套 App。
 
-- `doctor` 检查 Node、配置、SQLite 和适配器，不发送消息。
-- `notify.js --test` 发一条测试消息。输出 `ok: true` 只表示服务器接受了消息，请分别确认手机通知和手环振动。
-- `npm start` 在当前窗口监听；**窗口要保持开启**，按 Ctrl+C 停止。
+### 5. 回到电脑：先双击 02 测试，再双击 03 启动
 
-第一次启动只建立已有会话的基线，不会把所有历史任务发一遍。此后新发生的事件才会触发通知；监听器保存读取位置和去重记录，用于恢复。
+1. 双击 **`02-发送测试通知.cmd`**。
+2. 电脑应显示 **“服务器已接受测试通知”**。接着分别检查：**手机出现 ntfy 通知，手环显示消息或振动**。
+3. 两边都正常后，双击 **`03-开始监听.cmd`**。
+4. 看到 **“后台监听已启动，这个窗口可以关闭”**，就可以关闭命令窗口，去支持的 AI 软件里发起一个新任务。
+5. 让新任务持续超过默认的 3 秒门槛，完成后检查自动提醒。首次启动只记住已有记录，不会补发所有历史任务。
 
-### 4. 后台运行与开机启动（可选）
+“服务器已接受”只确认电脑发出去了；手机和手环要各自检查。手机有通知、手环没有时，优先检查上一步的配套 App。
 
-前台验证成功后，先按 Ctrl+C 关闭前台监听，再双击根目录的 **`一键启动.vbs`**。使用 **`看监听状态.vbs`** 或以下命令查看状态：
+## 以后每天怎么用
 
-```powershell
-npm run status
-```
+| 想做什么 | 双击哪个文件 | 会看到什么 |
+| --- | --- | --- |
+| 开始收提醒 | `03-开始监听.cmd` | 后台启动；重复点击会提示已经运行 |
+| 检查是否正在监听 | `04-查看状态.cmd` | “监听正在运行”或“监听没有运行” |
+| 暂时停止提醒 | `05-停止监听.cmd` | 本目录的后台监听已停止 |
+| 测试手机 / 手环 | `02-发送测试通知.cmd` | 发一条测试消息，再观察手机和手环 |
+| 重新查看订阅信息 | 打开 `app/phone-subscription.txt` | 显示自己的服务器与主题 |
 
-需要登录 Windows 后自动运行，可双击 **`装进任务计划程序.vbs`**，按提示完成，再在任务计划程序中核对 `band-notify-watchers` 的路径。
+**关闭弹出的命令窗口不会停止后台监听，停止请用 05。** 电脑关机、重启或注销后，下一次使用需要重新双击 03。默认不会添加开机启动项；想自动启动可看 [Windows 后台运行与开机启动](docs/windows-startup.md)。
 
-VBS 入口依赖 Windows Script Host / VBScript；系统禁用该组件时，使用前台命令，或按 [Windows 后台运行说明](docs/windows-startup.md) 手动创建计划任务。**计划任务和启动文件夹二选一，且同一份项目只运行一个监听器。** 从旧版本迁移时先停掉旧入口，再安装新目录的入口。
+移动整个文件夹前先双击 05，移动后再双击新位置的 03。分享时请发 GitHub 下载链接，自己的已使用文件夹含订阅信息和日志。
 
-## 通知内容与设置
+## 支持哪些 AI 软件
 
-默认通知示例：
+| 软件 | 完成 / 出错 | 等待回答 | 等待批准 |
+| --- | --- | --- | --- |
+| Codex | 支持 | 提问工具事件 | 审批事件 |
+| DeepSeek Harness | 支持 | 会话中的提问状态 | 计划待审状态 |
+| WorkBuddy | 支持 | AskUserQuestion 事件 | 安全中心审计事件 |
+| ZCode | 支持 | 回复文本规则，可能误判 | SQLite 权限记录 |
+| MiMo Desktop | 支持 | 问答工具 / 交互命令状态 | SQLite 权限记录 |
+
+只需在电脑上安装并使用其中一个软件，不必装齐五个。程序读取当前 Windows 用户下的默认本地会话位置；自定义数据目录请看 [高级配置](docs/configuration.md)。软件改变本地记录格式时，适配器可能需要更新。
+
+默认通知包含状态、软件名、会话名和摘要，例如：
 
 ```text
 ✅ 已完成
@@ -97,50 +116,49 @@ VBS 入口依赖 Windows Script Host / VBScript；系统禁用该组件时，使
 
 ❓ 等你回答
 【WorkBuddy】示例会话 · 请选择运行方式
-
-❓ 等你批准
-【MiMo】示例任务 · 需要你确认工具操作
 ```
 
-编辑本地 `config.json`：
+## 卡住了，先看这里
 
-| 配置 | 用途 |
+| 现象 | 接下来怎么做 |
 | --- | --- |
-| `ntfyServer` | ntfy 服务器地址，支持自建服务器 |
-| `topic` | 手机订阅的私有随机频道名称 |
-| `token` | 可选的 ntfy 访问令牌 |
-| `enabled` | 暂停或启用发送 |
-| `minSeconds` | 最短任务时长，`0` 表示不按时长过滤 |
-| `title` / `body` | 标题和正文模板 |
-| `previewMax` / `conversationMax` | 摘要、会话名的最大显示长度 |
-| `priority` | ntfy 优先级 `1`–`5`，默认 `4` |
+| 下载了一堆 `.js`，找不到五个编号文件 | 回到顶部，下载发布包 `AgentBandNotify-Windows-x64.zip` 并全部解压 |
+| 提示找不到 Node 或脚本 | 核对下载的是便携包；五个入口与 `app` 必须在同一层，保留完整目录 |
+| 01 成功，但不知道手机填什么 | 打开 `app/phone-subscription.txt`，只复制服务器与主题两项 |
+| 02 没有显示“服务器已接受” | 保留错误信息；确认电脑能联网并访问 `https://ntfy.sh`，再看配置的地址与权限 |
+| 02 显示已接受，手机没有消息 | 核对手机服务器与主题；检查 ntfy 通知权限、后台联网和电池设置 |
+| 手机有消息，手环不振动 | 检查配套 App 对 ntfy 的转发、通知读取权限、蓝牙连接、手环勿扰 |
+| 02 正常，AI 做完却没有提醒 | 用 04 确认监听在运行；启动后发起新任务，并让它持续超过 3 秒；自定义目录看高级配置 |
+| 同一消息重复出现 | 停止旧文件夹的监听，检查源码前台窗口、旧启动项或另一份程序是否也在运行 |
+| 05 停止后又启动了 | 检查以前设置的启动文件夹或计划任务，并禁用对应的自动重启入口 |
 
-常用环境变量和非默认数据目录配置见 [高级配置与接入](docs/configuration.md)。
+Windows 弹出安全提示时，先核对文件确实来自本仓库发布页；受学校或公司策略限制时按设备管理要求处理。反馈问题请写明卡在第几步、窗口错误、手机是否收到，并隐藏主题、令牌和聊天内容。
 
-## 常用命令
+## 配置、数据与隐私
+
+便携包的设置保存在 `app/config.json`，运行记录保存在 `app/logs/`。例如把 `minSeconds` 改成 `0` 可取消时长过滤，把 `enabled` 改成 `false` 可关闭发送。修改后先 05 停止，再 03 启动，使监听器使用新配置。[完整配置说明](docs/configuration.md)
+
+通知经过 **电脑 → ntfy 服务器 → 手机 ntfy → 配套 App → 手环**，无需电脑连接手环蓝牙。会话名和摘要会发送到所选 ntfy 服务器；可配置自建服务。随机主题降低被猜中的可能性，不提供端到端加密或完整访问控制，请保管主题和令牌。[ntfy 发布与鉴权说明](https://docs.ntfy.sh/publish/)
+
+检测到任务轮次结束不代表代码已通过测试；提醒也受网络、手机后台限制、配套 App 和手环设置影响。程序不会替你批准智能体操作。自动测试不能替代自己的手机、手环接收确认。
+
+## 源码运行与开发
+
+这一节适合要修改代码的人。普通使用按上面的便携包步骤即可。
+
+源码需要 [Node.js 22.13 或更新版本](https://nodejs.org/en/download)，建议 Node.js 24；无需安装第三方 npm 依赖。通过 **Code → Download ZIP** 下载源码并全部解压，在源码目录打开终端：
 
 ```powershell
-node tools/agent-watch.js --list
-node tools/agent-watch.js --status
-node tools/agent-watch.js --agent codex --once --dry-run
-node notify.js --title "测试提醒" --body "这是一条手动消息" --force
-npm test
+node tools/setup.js
+node tools/doctor.js
+node notify.js --test --json
+node tools/agent-watch.js
 ```
 
-`--once --dry-run` 不发送消息，但会记录扫描状态；需要测试真实完成提醒时，请在开始监听后发起一个新任务。查看 `logs/notify.log`、`logs/agent-watch.log` 可定位发送失败或读取异常。日志、缓存、真实配置均已被 Git 忽略。
+以上依次创建本地配置、检查运行条件、发送测试、前台监听。前台窗口要保持开启，按 Ctrl+C 停止。也可用源码根目录的五个编号入口；它们会使用已安装的 Node。
 
-## 隐私与边界
+`npm test` 运行合成会话、SQLite、去重与本地 HTTP 测试；测试不向公共频道发送，也不改写真实智能体配置。适配器位于 `src/agents/`，统一监听引擎位于 `tools/agent-watch.js`。
 
-通知摘要会发送到所选 ntfy 服务器；如果不希望外部服务看到摘要，可部署自己的 ntfy 并设置访问控制。随机频道名用于防猜测，**不是端到端加密或完整权限控制**，不要公开自己的频道和令牌。[ntfy 发布与鉴权说明](https://docs.ntfy.sh/publish/)
+打包者安装 Python 3.11 或更新版本后执行 `python tools/build-release.py`。构建工具从 Node 官网下载固定版本的 Windows x64 运行环境，核对 SHA256，再按明确文件清单生成项目旁的 `agent-band-notify-distribution/AgentBandNotify-Windows-x64.zip` 与 `SHA256SUMS.txt`。真实配置、订阅信息和日志不会进入发布包。
 
-提醒是否及时还取决于电脑联网、手机后台限制、配套 App 和手环通知设置。任务“完成”指检测到软件轮次结束，不代表其代码已通过测试。ZCode 的文本提问识别存在误判可能，审批记录是否可见也取决于软件版本和权限模式。
-
-自动测试覆盖合成会话、SQLite 状态、消息格式、去重、重启恢复、初始化和本地 HTTP 发送；不会替代真实手机与手环验收。手工验收步骤见手机设置文档。
-
-## 开发与复用
-
-运行 `npm test`，测试使用临时用户目录与本地 HTTP 接收器，不写入真实智能体配置、不向公共频道推送。没有安装相应软件时，真实日志样本检查会明确跳过。
-
-适配器位于 `src/agents/`，共享监听引擎位于 `tools/agent-watch.js`，消息渲染和传输位于 `src/notice.js`、`src/transport.js`。旧的 `codex-watch.js` / `dsh-watch.js` 入口仅打印迁移提示并退出，避免额外启动重复监听器。
-
-本项目采用 [MIT License](LICENSE)，允许使用、修改与分发，保留许可声明即可。
+项目使用 [MIT License](LICENSE)。便携包所附 Node.js 及第三方组件保留原许可，见 `app/runtime/LICENSE`；官方来源、版本和校验值见 `app/RUNTIME.txt`。

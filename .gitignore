@@ -16,3 +16,6 @@ node_modules/
 *.db-*
 *.pem
 *.key
+runtime/
+phone-subscription.txt
+dist/

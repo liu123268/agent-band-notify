@@ -30,6 +30,7 @@ const suites = [
   ['tools/test-agent-watch.js'],
   ['tools/test-workbuddy.js'],
   ['--test', 'tests/portable.test.js'],
+  ['--test', 'tests/quickstart.test.js'],
   ['tools/check-vbs.js'],
   ['tools/audit-invariants.js', '--quiet'],
 ];

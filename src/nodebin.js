@@ -8,7 +8,7 @@ const path = require('path');
  * 候选 node，按"稳定 → 兜底"排序。`execPath` 只是**第一个候选**，不是唯一答案。
  */
 function nodeBinCandidates(execPath) {
-  const list = [execPath];
+  const list = [execPath, path.join(__dirname, '..', 'runtime', 'node.exe')];
   const versions = path.join(os.homedir(), '.workbuddy', 'binaries', 'node', 'versions');
   // `current` 是稳定的 junction，优先；再退到任何真带 node.exe 的版本目录。
   list.push(path.join(versions, 'current', 'node.exe'));

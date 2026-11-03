@@ -1,0 +1,24 @@
+Agent Band Notify · 智能体手环提醒
+
+适合 Windows 10/11 64 位电脑（Intel/AMD）和 Android 手机。
+先把整个 ZIP 全部解压，再双击下面的编号文件。
+app 文件夹与编号文件放在一起，不能只复制一个 cmd。
+
+第一次使用：
+1. 双击 01-首次配置.cmd，记事本会显示自己的服务器和主题。
+2. Android 手机安装 ntfy：
+   https://github.com/binwiederhier/ntfy-android/releases/download/v1.25.2/ntfy-1.25.2-fdroid-release.apk
+   打开 ntfy，点 + 添加订阅。服务器与主题填记事本中那两项。
+3. 打开手环原来的配套 App，在应用通知中允许 ntfy，并授予通知读取权限。
+4. 双击 02-发送测试通知.cmd，分别确认电脑已接受、手机有通知、手环有消息或振动。
+5. 双击 03-开始监听.cmd，看到成功后去 AI 软件发起一个新任务。
+   首次启动不补发历史，默认只提醒持续超过 3 秒的任务。
+
+以后：03 开始，04 查看状态，05 停止。
+关闭命令窗口不会停止后台监听；重启电脑后需要重新点 03。
+手机订阅信息在 app/phone-subscription.txt，自己的信息请勿公开。
+
+完整步骤与排错：
+https://github.com/liu123268/agent-band-notify#readme
+也可阅读本目录 README.md 和 docs/phone-setup.md。
+已带运行环境，无需安装 Node、Python、Git 或 npm 依赖。

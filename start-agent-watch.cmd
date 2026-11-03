@@ -23,7 +23,8 @@ rem Prefer the DSH runtime node, then any WorkBuddy-managed node.
 rem NEVER hardcode a versioned WorkBuddy path (..\node\versions\22.22.2-3\node.exe):
 rem a WorkBuddy update repoints it, and the entry then fails silently at every logon
 rem with no window and no log - which looks exactly like "no AI activity at all".
-set "NODE_BIN=%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
+set "NODE_BIN=%~dp0runtime\node.exe"
+if not exist "%NODE_BIN%" set "NODE_BIN=%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 if exist "%NODE_BIN%" goto havenode
 set "NODE_BIN="
 for /d %%D in ("%USERPROFILE%\.workbuddy\binaries\node\versions\*") do if exist "%%D\node.exe" set "NODE_BIN=%%D\node.exe"

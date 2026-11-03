@@ -6,7 +6,8 @@ rem
 rem ASCII only on purpose: cmd.exe parses .cmd files in the OEM code page, so
 rem non-ASCII comments here can corrupt the batch parsing.
 setlocal DisableDelayedExpansion
-set "NODE_BIN=%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
+set "NODE_BIN=%~dp0runtime\node.exe"
+if not exist "%NODE_BIN%" set "NODE_BIN=%USERPROFILE%\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 if not exist "%NODE_BIN%" set "NODE_BIN=node"
 "%NODE_BIN%" "%~dp0tools\hook-handler.js" %*
 rem Always 0: a "block" result (exit 2) would force another model turn.
